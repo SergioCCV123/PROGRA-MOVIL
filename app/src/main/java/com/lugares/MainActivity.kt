@@ -1,11 +1,16 @@
 package com.lugares
 
 import android.app.Notification.Action
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.Toast
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.ktx.app
@@ -25,24 +30,59 @@ class MainActivity : AppCompatActivity() {
         auth = Firebase.auth
 
         binding.loginBtn.setOnClickListener { login() }
+        binding.registerBtn.setOnClickListener { register() }
     }
 
-    //Probando
-    fun login(){
+     fun register(){
+         var email = binding.emailTF.text.toString()
+         var pwd = binding.pdwTF.text.toString()
+         binding.root.isClickable = false
+         auth.createUserWithEmailAndPassword(email,pwd)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    binding.root.isClickable = true
+                    binding.loadingSpinner.visibility = View.GONE
+                    Log.d("creando usuario", "Registrado")
+                    actualiza(auth.currentUser)
+                } else {
+                    Log.d("creando usuario", "Error en registro")
+                    Toast.makeText(baseContext, "Fallo", Toast.LENGTH_LONG).show()
+                    binding.loadingSpinner.visibility = View.GONE
+                    binding.root.isClickable = true
+                }
+            }
+    }
 
-        var email = binding.emailTF.text
-        var pwd = binding.pdwTF.text
+     fun login(){
+         var email = binding.emailTF.text.toString()
+         var pwd = binding.pdwTF.text.toString()
+         binding.loadingSpinner.visibility = View.VISIBLE
+         binding.root.isClickable = false
+         auth.signInWithEmailAndPassword(email,pwd)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    binding.root.isClickable = true
+                    binding.loadingSpinner.visibility = View.GONE
+                    Log.d("Autenticando", "Autenticado")
+                    actualiza(auth.currentUser)
+                } else {
+                    Log.d("Autenticando", "Error en autenticacion")
+                    Toast.makeText(baseContext, "Fallo", Toast.LENGTH_LONG).show()
+                    binding.loadingSpinner.visibility = View.GONE
+                    binding.root.isClickable = true
+                }
+            }
+    }
 
-        var resp = auth.createUserWithEmailAndPassword(email.toString(),pwd.toString())
-        if(resp.isSuccessful){
-            val mySnackbar = Snackbar.make(binding.root, "Usuario Creado", 700)
-            mySnackbar.show()
-        }else if(resp.isCanceled){
-            val mySnackbar = Snackbar.make(binding.root, resp.result.toString(), 5)
-            mySnackbar.show()
-        }else{
-            val mySnackbar = Snackbar.make(binding.root, "error", 700)
-            mySnackbar.show()
+     fun actualiza(user: FirebaseUser?) {
+        if(user!=null){
+            val intent = Intent(this, HomePage::class.java)
+            startActivity(intent)
         }
+    }
+
+    public override fun onStart(){
+        super.onStart()
+        actualiza(auth.currentUser)
     }
 }
