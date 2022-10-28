@@ -1,13 +1,36 @@
 package com.lugares.viewmodel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.lugares.data.LugarDatabase
+import com.lugares.model.Lugar
+import com.lugares.repository.LugarRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class LugarViewModel : ViewModel() {
+class LugarViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is home Fragment"
+    private val lugarRepository : LugarRepository
+    val getLugares : LiveData<List<Lugar>>
+
+    init{
+        val lugarDao = LugarDatabase.getDatabase(application).lugarDao()
+        lugarRepository = LugarRepository(lugarDao)
+        getLugares = lugarRepository.getLugares
     }
-    val text: LiveData<String> = _text
+
+    fun saveLugar (lugar: Lugar){
+        viewModelScope.launch(Dispatchers.IO) {
+            lugarRepository.saveLugar(lugar)
+        }
+    }
+
+    fun deleteLugar (lugar: Lugar){
+        viewModelScope.launch(Dispatchers.IO) {
+            lugarRepository.deleteLugar(lugar)
+        }
+    }
+
 }
