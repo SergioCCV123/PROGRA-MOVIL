@@ -2,6 +2,7 @@ package com.lugares.ui.lugar
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -12,6 +13,7 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.bumptech.glide.Glide
 import com.lugares.R
 import com.lugares.databinding.FragmentUpdateLugarBinding
 import com.lugares.model.Lugar
@@ -25,6 +27,8 @@ class UpdateLugarFragment : Fragment() {
     private lateinit var lugarViewModel: LugarViewModel
 
     private val args by navArgs<UpdateLugarFragmentArgs>()
+
+    private lateinit var mediaPlayer: MediaPlayer
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -53,11 +57,38 @@ class UpdateLugarFragment : Fragment() {
         binding.btWeb.setOnClickListener {verWeb()}
         binding.btLocation.setOnClickListener { verEnMapa() }
 
+        if(args.lugar.rutaAudio?.isNotEmpty()==true){
+            mediaPlayer = MediaPlayer()
+            mediaPlayer.setDataSource(args.lugar.rutaAudio)
+            mediaPlayer.prepare()
+            binding.btPlay.isEnabled=true
+        }else{
+            binding.btPlay.isEnabled=false
+        }
+
+        binding.btPlay.setOnClickListener { mediaPlayer.start() }
+
+        if(args.lugar.rutaImagen?.isNotEmpty()==true){
+            Glide.with(requireContext())
+                .load(args.lugar.rutaImagen)
+                .fitCenter()
+                .into(binding.imagen)
+        }
+
         return binding.root
     }
 
     private fun verEnMapa() {
-        TODO("Not yet implemented")
+        val latitud = binding.tvLatitud.text.toString().toDouble()
+        val longitud = binding.tvLongitud.text.toString().toDouble()
+
+        if(latitud.isFinite() && longitud.isFinite()){
+            val uri = "geo$latitud,$longitud?z18"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+            startActivity(intent)
+        }else{
+            Toast.makeText(requireContext(), "Faltan Datos", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun verWeb() {
